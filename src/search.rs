@@ -141,8 +141,19 @@ pub fn install_file(path: &Path) -> Result<String, String> {
     Ok(name.trim_end_matches(".py").to_string())
 }
 
+/// Remove a plugin with its icon, its settings file and Python's cached copy.
 pub fn remove(id: &str) {
-    let _ = std::fs::remove_file(paths::engines_dir().join(format!("{id}.py")));
+    let dir = paths::engines_dir();
+    for ext in ["py", "ico", "png", "json"] {
+        let _ = std::fs::remove_file(dir.join(format!("{id}.{ext}")));
+    }
+    if let Ok(entries) = std::fs::read_dir(dir.join("__pycache__")) {
+        for e in entries.flatten() {
+            if e.file_name().to_string_lossy().starts_with(&format!("{id}.")) {
+                let _ = std::fs::remove_file(e.path());
+            }
+        }
+    }
 }
 
 // ---------- Running a search ----------
@@ -309,5 +320,24 @@ mod tests {
         assert_eq!(h.size, 6_000_000_000);
         assert!(parse_hit("not json").is_none());
         assert!(parse_hit(r#"{"name": "no link"}"#).is_none());
+    }
+
+    #[test]
+    fn removes_a_plugin_and_its_files() {
+        let root = std::env::temp_dir().join(format!("torrents-search-test-{}", std::process::id()));
+        // SAFETY: no other test reads XDG_DATA_HOME.
+        unsafe { std::env::set_var("XDG_DATA_HOME", &root) };
+        let dir = paths::engines_dir();
+        std::fs::create_dir_all(dir.join("__pycache__")).unwrap();
+        for f in ["jackett.py", "jackett.json", "jackett.ico", "__pycache__/jackett.cpython-314.pyc", "eztv.py"] {
+            std::fs::write(dir.join(f), "x").unwrap();
+        }
+        remove("jackett");
+        assert!(!dir.join("jackett.py").exists());
+        assert!(!dir.join("jackett.json").exists());
+        assert!(!dir.join("jackett.ico").exists());
+        assert!(!dir.join("__pycache__/jackett.cpython-314.pyc").exists());
+        assert!(dir.join("eztv.py").exists(), "other plugins stay");
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

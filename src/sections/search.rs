@@ -313,9 +313,14 @@ fn plugins_dialog() {
             });
             reload_engines();
         });
-        let id = e.id.clone();
+        let (id, name, list2, row_box) = (e.id.clone(), e.name.clone(), list.clone(), controls.clone());
         let remove = widgets::two_click("Remove", "Click again", move || {
             search::remove(&id);
+            // The row is the card holding these controls.
+            if let Some(row) = row_box.parent() {
+                list2.remove(&row);
+            }
+            window::toast(&format!("Removed {name}."));
             reload_engines();
         });
         controls.append(&remove);
