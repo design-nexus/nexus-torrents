@@ -1,0 +1,907 @@
+/* Torrents — styled after Strata's settings dialog. Every colour comes from the
+ * @theme_* tokens defined by the active palette (see theme.rs). */
+
+window.torrents-window {
+  background: @theme_bg;
+  color: @theme_text;
+}
+
+window.torrents-window,
+window.torrents-window popover,
+window.torrents-window dialog {
+  font-size: 1.0em;
+}
+
+.mono,
+.value-readout {
+  font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", monospace;
+  font-feature-settings: "tnum";
+}
+
+/* ---------- Sidebar ---------- */
+
+.settings-navigation {
+  background: @theme_surface;
+  min-width: 240px;
+  padding: 20px 15px 14px;
+  border-right: 1px solid alpha(@theme_border, 0.55);
+}
+
+.settings-navigation.compact {
+  min-width: 64px;
+  padding: 16px 8px;
+}
+
+.settings-navigation .menu-heading {
+  margin: 2px 10px 14px;
+  font-size: 0.875em;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: @theme_dim_text;
+}
+
+.settings-navigation .nav-group {
+  margin: 16px 10px 6px;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: alpha(@theme_dim_text, 0.85);
+}
+
+.settings-navigation button.nav-item {
+  min-height: 38px;
+  padding: 0 12px;
+  margin: 1px 0;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: alpha(@theme_text, 0.78);
+  transition: background 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.settings-navigation button.nav-item image {
+  color: @theme_dim_text;
+}
+
+.settings-navigation button.nav-item:hover {
+  background: alpha(@theme_highlight, 0.55);
+  color: @theme_text;
+}
+
+.settings-navigation button.nav-item.active {
+  background: alpha(@theme_accent, 0.16);
+  color: @theme_text;
+  box-shadow: inset 0 0 0 1px alpha(@theme_accent, 0.42);
+}
+
+.settings-navigation button.nav-item.active image {
+  color: @theme_accent;
+}
+
+.settings-navigation button.nav-item .nav-label {
+  font-weight: 600;
+}
+
+.settings-navigation .nav-footer {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid alpha(@theme_border, 0.45);
+}
+
+/* ---------- Search ---------- */
+
+entry.settings-search,
+searchbar entry,
+entry.settings-search > text {
+  min-height: 34px;
+}
+
+entry.settings-search {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: alpha(@theme_bg, 0.7);
+  border: 1px solid alpha(@theme_border, 0.7);
+  box-shadow: none;
+  color: @theme_text;
+  outline: none;
+}
+
+entry.settings-search:focus-within {
+  border-color: alpha(@theme_accent, 0.8);
+  box-shadow: 0 0 0 1px alpha(@theme_accent, 0.38);
+}
+
+entry.settings-search image {
+  color: @theme_dim_text;
+}
+
+/* ---------- Content ---------- */
+
+.settings-content {
+  background: @theme_bg;
+}
+
+.settings-page {
+  padding: 30px 36px 48px;
+}
+
+.settings-page.narrow {
+  padding: 22px 18px 40px;
+}
+
+.section-header {
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 1.62em;
+  font-weight: 800;
+  color: @theme_text;
+}
+
+.section-description {
+  margin-top: 2px;
+  color: @theme_dim_text;
+}
+
+.group-title {
+  margin: 24px 2px 8px;
+  font-size: 0.76em;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: @theme_dim_text;
+}
+
+.group-note {
+  margin: -2px 2px 10px;
+  font-size: 0.88em;
+  color: @theme_dim_text;
+}
+
+.settings-group {
+  /* the rows provide the chrome */
+}
+
+.settings-option {
+  background: mix(@theme_bg, @theme_muted, 0.25);
+  border: 1px solid alpha(@theme_border, 0.55);
+  border-radius: 6px;
+  min-height: 60px;
+  padding: 10px 14px;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out, background 150ms ease-out;
+}
+
+.settings-option:hover {
+  border-color: alpha(@theme_border, 0.95);
+}
+
+.settings-option.search-hit {
+  border-color: alpha(@theme_accent, 0.72);
+  box-shadow: 0 0 0 1px alpha(@theme_accent, 0.38), 0 0 14px alpha(@theme_glow, 0.24);
+}
+
+.settings-option.tall {
+  padding: 14px 16px;
+}
+
+.settings-option-title {
+  color: @theme_text;
+  font-weight: 700;
+}
+
+.settings-option-description {
+  color: @theme_dim_text;
+  font-size: 0.88em;
+}
+
+.settings-option-description link {
+  color: @theme_accent;
+}
+
+.value-readout {
+  color: @theme_text;
+  min-width: 64px;
+}
+
+.dim {
+  color: @theme_dim_text;
+}
+
+.danger-text {
+  color: @theme_danger;
+}
+
+.accent-text {
+  color: @theme_accent;
+}
+
+/* ---------- Buttons ---------- */
+
+window.torrents-window button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: alpha(@theme_muted, 0.32);
+  border: 1px solid alpha(@theme_border, 0.8);
+  box-shadow: none;
+  color: @theme_text;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
+}
+
+window.torrents-window button:hover {
+  background: alpha(@theme_muted, 0.55);
+  border-color: alpha(@theme_accent, 0.55);
+}
+
+window.torrents-window button:active {
+  background: alpha(@theme_accent, 0.22);
+}
+
+window.torrents-window button:disabled {
+  opacity: 0.45;
+}
+
+window.torrents-window button.suggested-action {
+  background: @theme_accent;
+  border-color: @theme_accent;
+  color: @theme_on_accent;
+  font-weight: 700;
+}
+
+window.torrents-window button.suggested-action:hover {
+  background: mix(@theme_accent, @theme_text, 0.12);
+}
+
+window.torrents-window button.destructive-action {
+  background: alpha(@theme_danger, 0.12);
+  border-color: alpha(@theme_danger, 0.55);
+  color: @theme_danger;
+}
+
+window.torrents-window button.flat {
+  background: transparent;
+  border-color: transparent;
+}
+
+window.torrents-window button.flat:hover {
+  background: alpha(@theme_highlight, 0.55);
+}
+
+window.torrents-window button.reset-button {
+  min-height: 26px;
+  min-width: 26px;
+  padding: 0;
+  border-radius: 999px;
+  color: @theme_dim_text;
+}
+
+window.torrents-window button.open-config {
+  min-height: 34px;
+  padding: 0 14px;
+  font-weight: 600;
+}
+
+window.torrents-window button.open-config image {
+  color: @theme_accent;
+}
+
+window.torrents-window button.chip {
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.9em;
+}
+
+window.torrents-window button.chip.selected {
+  background: alpha(@theme_accent, 0.2);
+  border-color: alpha(@theme_accent, 0.8);
+  color: @theme_text;
+}
+
+/* ---------- Inputs ---------- */
+
+window.torrents-window entry,
+window.torrents-window spinbutton {
+  min-height: 32px;
+  border-radius: 5px;
+  background: alpha(@theme_bg, 0.65);
+  border: 1px solid alpha(@theme_border, 0.8);
+  box-shadow: none;
+  color: @theme_text;
+}
+
+window.torrents-window entry:focus-within,
+window.torrents-window spinbutton:focus-within {
+  border-color: @theme_accent;
+  box-shadow: 0 0 0 1px alpha(@theme_accent, 0.38);
+}
+
+window.torrents-window dropdown > button {
+  min-width: 160px;
+}
+
+window.torrents-window popover > contents {
+  background: @theme_surface;
+  border: 1px solid alpha(@theme_border, 0.7);
+  border-radius: 9px;
+  box-shadow: 0 4px 16px alpha(@theme_shadow, 0.5);
+  color: @theme_text;
+  padding: 4px;
+}
+
+window.torrents-window popover listview > row,
+window.torrents-window popover list > row {
+  border-radius: 5px;
+  padding: 6px 10px;
+  color: @theme_text;
+}
+
+window.torrents-window popover listview > row:hover,
+window.torrents-window popover list > row:hover,
+window.torrents-window popover listview > row:selected {
+  background: alpha(@theme_accent, 0.18);
+}
+
+window.torrents-window switch {
+  min-width: 40px;
+  min-height: 22px;
+  border-radius: 999px;
+  background: alpha(@theme_muted, 0.85);
+  border: 1px solid alpha(@theme_border, 0.9);
+  box-shadow: none;
+}
+
+window.torrents-window switch:checked {
+  background: @theme_accent;
+  border-color: @theme_accent;
+}
+
+window.torrents-window switch > slider {
+  min-width: 18px;
+  min-height: 18px;
+  margin: 1px;
+  border-radius: 999px;
+  background: @theme_text;
+  border: none;
+  box-shadow: 0 1px 3px alpha(@theme_shadow, 0.5);
+}
+
+window.torrents-window switch:checked > slider {
+  background: @theme_on_accent;
+}
+
+window.torrents-window scale {
+  padding: 8px 4px;
+}
+
+window.torrents-window scale > trough {
+  min-height: 4px;
+  min-width: 4px;
+  border-radius: 999px;
+  background: alpha(@theme_muted, 0.8);
+  border: none;
+}
+
+window.torrents-window scale > trough > highlight {
+  border-radius: 999px;
+  background: @theme_accent;
+}
+
+window.torrents-window scale > trough > slider,
+window.torrents-window scale.marks-before > trough > slider,
+window.torrents-window scale.marks-after > trough > slider {
+  -gtk-icon-source: none;
+  background-image: none;
+  min-width: 16px;
+  min-height: 16px;
+  margin: -7px;
+  border-radius: 999px;
+  background: @theme_text;
+  border: 2px solid @theme_accent;
+  box-shadow: 0 0 10px alpha(@theme_glow, 0.35);
+}
+
+window.torrents-window scale:disabled {
+  opacity: 0.5;
+}
+
+window.torrents-window scale marks {
+  color: alpha(@theme_dim_text, 0.7);
+}
+
+window.torrents-window scrollbar {
+  background: transparent;
+}
+
+window.torrents-window scrollbar slider {
+  min-width: 6px;
+  border-radius: 999px;
+  background: alpha(@theme_muted, 0.9);
+}
+
+/* ---------- Theme swatches ---------- */
+
+.swatch {
+  min-width: 16px;
+  min-height: 16px;
+  border-radius: 4px;
+  border: 1px solid alpha(@theme_shadow, 0.4);
+}
+
+/* ---------- Banners and dialogs ---------- */
+
+.banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: alpha(@theme_accent, 0.12);
+  border: 1px solid alpha(@theme_accent, 0.45);
+  margin-bottom: 14px;
+}
+
+.banner.warning {
+  background: alpha(@theme_danger, 0.1);
+  border-color: alpha(@theme_danger, 0.45);
+}
+
+.toast {
+  margin: 18px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: @theme_surface;
+  border: 1px solid alpha(@theme_border, 0.8);
+  box-shadow: 0 4px 16px alpha(@theme_shadow, 0.5), 0 0 14px alpha(@theme_glow, 0.14);
+}
+
+.dialog-card {
+  background: @theme_bg;
+  border: 1px solid alpha(@theme_border, 0.65);
+  border-radius: 14px;
+  box-shadow: 0 0 28px alpha(@theme_glow, 0.08);
+  padding: 24px;
+}
+
+.code-block {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.86em;
+  background: alpha(@theme_shadow, 0.35);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: @theme_text;
+}
+
+textview.code-block > text {
+  background: transparent;
+  color: @theme_text;
+}
+
+.key-cap {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: alpha(@theme_muted, 0.55);
+  border: 1px solid alpha(@theme_border, 0.9);
+}
+
+/* ---------- Sidebar readouts and footer ---------- */
+
+.settings-navigation .nav-readout {
+  font-size: 0.78em;
+  color: @theme_dim_text;
+}
+
+.settings-navigation button.nav-item.active .nav-readout {
+  color: @theme_text;
+}
+
+/* ---------- Graphs ---------- */
+
+.graph-card {
+  background: mix(@theme_bg, @theme_muted, 0.25);
+  border: 1px solid alpha(@theme_border, 0.55);
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+
+.graph-card-title {
+  font-weight: 700;
+  color: @theme_text;
+}
+
+.graph-legend {
+  font-size: 0.86em;
+}
+
+.legend-label {
+  color: @theme_dim_text;
+}
+
+.legend-value {
+  color: @theme_text;
+  font-weight: 700;
+}
+
+.legend-swatch {
+  min-width: 16px;
+  min-height: 3px;
+  border-radius: 2px;
+}
+
+.legend-swatch.tone-accent { background: @theme_accent; }
+.legend-swatch.tone-second { background: mix(@theme_accent, @theme_danger, 0.55); }
+
+.legend-swatch.dashed {
+  min-height: 0;
+  background: none;
+  border-top: 2px dashed mix(@theme_accent, @theme_danger, 0.55);
+}
+
+.graph-plot {
+  background: alpha(@theme_bg, 0.35);
+  border-radius: 4px;
+}
+
+.graph-axis {
+  font-size: 0.72em;
+  color: @theme_dim_text;
+}
+
+.graph-plot .graph-axis {
+  margin: 3px 6px;
+  color: alpha(@theme_dim_text, 0.9);
+}
+
+.graph-tip {
+  font-size: 0.8em;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: @theme_surface;
+  border: 1px solid alpha(@theme_border, 0.8);
+  box-shadow: 0 4px 16px alpha(@theme_shadow, 0.5);
+  color: @theme_text;
+}
+
+/* ---------- Key figures ---------- */
+
+.kv-key {
+  font-size: 0.78em;
+  font-weight: 700;
+  color: @theme_dim_text;
+}
+
+.kv-value {
+  font-size: 1.05em;
+  font-weight: 700;
+  color: @theme_text;
+}
+
+/* ---------- Tags ---------- */
+
+.tag {
+  font-size: 0.72em;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: alpha(@theme_muted, 0.55);
+  color: @theme_dim_text;
+}
+
+.tag.accent {
+  background: alpha(@theme_accent, 0.18);
+  color: @theme_text;
+}
+
+.tag.danger {
+  background: alpha(@theme_danger, 0.14);
+  color: @theme_danger;
+}
+
+/* ---------- Tables (processes, services) ---------- */
+
+.settings-page.fill {
+  padding-bottom: 22px;
+}
+
+.toolbar {
+  margin: 14px 0 10px;
+}
+
+.table-card {
+  background: mix(@theme_bg, @theme_muted, 0.18);
+  border: 1px solid alpha(@theme_border, 0.55);
+  border-radius: 6px;
+}
+
+window.torrents-window columnview {
+  background: transparent;
+  color: @theme_text;
+}
+
+window.torrents-window columnview > header {
+  background: transparent;
+  border-bottom: 1px solid alpha(@theme_border, 0.55);
+}
+
+window.torrents-window columnview > header > button {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  color: @theme_dim_text;
+}
+
+window.torrents-window columnview > header > button,
+window.torrents-window columnview > header > button > box > label {
+  font-size: 1em;
+  font-weight: 700;
+}
+
+window.torrents-window columnview > header > button:hover {
+  background: alpha(@theme_highlight, 0.4);
+  color: @theme_text;
+}
+
+window.torrents-window columnview > header > button sort-indicator {
+  color: @theme_accent;
+}
+
+window.torrents-window columnview > listview {
+  background: transparent;
+}
+
+window.torrents-window columnview > listview > row {
+  border-radius: 5px;
+  margin: 0 4px;
+  transition: background 150ms ease-out;
+}
+
+window.torrents-window columnview > listview > row:hover {
+  background: alpha(@theme_highlight, 0.55);
+}
+
+window.torrents-window columnview > listview > row:selected {
+  background: alpha(@theme_accent, 0.16);
+  box-shadow: inset 0 0 0 1px alpha(@theme_accent, 0.42);
+  color: @theme_text;
+}
+
+window.torrents-window columnview > listview > row > cell {
+  padding: 5px 10px;
+}
+
+.cell-num {
+  font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", monospace;
+  font-feature-settings: "tnum";
+  font-size: 0.92em;
+}
+
+.details-title {
+  font-size: 1.1em;
+  font-weight: 800;
+}
+
+.empty-state {
+  padding: 40px;
+  color: @theme_dim_text;
+}
+
+/* ---------- Torrents ---------- */
+
+/* Segmented control: a pill track of mutually exclusive choices. */
+.segmented {
+  background: alpha(@theme_muted, 0.32);
+  border: 1px solid alpha(@theme_border, 0.8);
+  border-radius: 7px;
+  padding: 2px;
+}
+
+window.torrents-window .segmented > button {
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: @theme_dim_text;
+}
+
+window.torrents-window .segmented > button:hover {
+  background: alpha(@theme_highlight, 0.55);
+  color: @theme_text;
+}
+
+window.torrents-window .segmented > button.selected {
+  background: @theme_accent;
+  color: @theme_on_accent;
+}
+
+/* Toolbar */
+window.torrents-window button.tool-button {
+  min-width: 32px;
+  padding: 0 8px;
+}
+
+.toolbar separator {
+  margin: 4px 4px;
+  background: alpha(@theme_border, 0.7);
+  min-width: 1px;
+}
+
+/* Sidebar extras */
+window.torrents-window button.nav-add {
+  min-height: 22px;
+  min-width: 22px;
+  padding: 0;
+  margin: 10px 6px 0 0;
+  border-radius: 999px;
+  color: @theme_dim_text;
+}
+
+.settings-navigation .footer-rate {
+  font-size: 0.86em;
+  color: @theme_text;
+}
+
+.settings-navigation .footer-net {
+  font-size: 0.74em;
+  color: @theme_dim_text;
+}
+
+window.torrents-window button.alt-chip {
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: 0.8em;
+  font-weight: 700;
+  color: @theme_dim_text;
+}
+
+window.torrents-window button.alt-chip.selected {
+  background: alpha(@theme_accent, 0.2);
+  border-color: alpha(@theme_accent, 0.8);
+  color: @theme_text;
+}
+
+/* Torrent table */
+.cell-icon {
+  color: @theme_dim_text;
+}
+
+.cell-icon.cell-hot {
+  color: @theme_accent;
+}
+
+.cell-icon.cell-error {
+  color: @theme_danger;
+}
+
+.row-paused label {
+  color: alpha(@theme_text, 0.6);
+}
+
+window.torrents-window progressbar.cell-progress > trough {
+  min-height: 6px;
+  min-width: 40px;
+  border-radius: 999px;
+  background: alpha(@theme_muted, 0.8);
+  border: none;
+}
+
+window.torrents-window progressbar.cell-progress > trough > progress {
+  min-height: 6px;
+  border-radius: 999px;
+  background: @theme_accent;
+  border: none;
+}
+
+window.torrents-window progressbar.cell-progress.done > trough > progress {
+  background: alpha(@theme_accent, 0.55);
+}
+
+window.torrents-window columnview > listview > row:selected .cell-icon {
+  color: @theme_accent;
+}
+
+entry.table-search,
+window.torrents-window searchentry {
+  min-height: 32px;
+}
+
+/* Details pane */
+.transfers-paned > separator {
+  min-height: 10px;
+  background: transparent;
+}
+
+.details-pane {
+  background: mix(@theme_bg, @theme_muted, 0.18);
+  border: 1px solid alpha(@theme_border, 0.55);
+  border-radius: 6px;
+}
+
+.details-head {
+  padding: 8px 10px 8px 16px;
+  border-bottom: 1px solid alpha(@theme_border, 0.45);
+}
+
+.details-title {
+  font-size: 1em;
+  font-weight: 800;
+}
+
+.details-general {
+  padding: 14px 16px 16px;
+}
+
+.pieces-bar {
+  min-height: 14px;
+}
+
+.fact-row .fact-value {
+  color: @theme_text;
+  font-size: 0.92em;
+}
+
+.details-table > listview > row > cell,
+window.torrents-window columnview.details-table > listview > row > cell {
+  padding: 3px 10px;
+}
+
+window.torrents-window .details-pane columnview > header > button {
+  min-height: 26px;
+}
+
+.details-speed {
+  padding: 12px 16px;
+}
+
+window.torrents-window dropdown.cell-choice > button {
+  min-width: 100px;
+  min-height: 26px;
+  padding: 0 8px;
+}
+
+/* Add dialog */
+.add-name {
+  font-size: 1.08em;
+  font-weight: 700;
+}
+
+.add-form {
+  margin-top: 6px;
+}
+
+.search-sub {
+  margin: -2px 0 10px;
+}
+
+window.torrents-window checkbutton {
+  color: @theme_text;
+}
+
+window.torrents-window checkbutton check {
+  border-radius: 4px;
+  border: 1px solid alpha(@theme_border, 0.9);
+  background: alpha(@theme_bg, 0.65);
+}
+
+window.torrents-window checkbutton check:checked {
+  background: @theme_accent;
+  border-color: @theme_accent;
+  color: @theme_on_accent;
+}
+
+window.torrents-window entry.error {
+  border-color: @theme_danger;
+}
+
+window.torrents-window textview.code-block {
+  border: 1px solid alpha(@theme_border, 0.8);
+}
+
+.details-add-row {
+  margin: 0 10px 10px;
+}

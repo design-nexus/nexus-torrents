@@ -1,0 +1,22 @@
+[Desktop Entry]
+Type=Application
+Name=Torrents
+GenericName=BitTorrent Client
+Comment=Download and share with BitTorrent, on qBittorrent's engine
+Exec=torrents %U
+Icon=io.github.design_nexus.Torrents
+Terminal=false
+StartupNotify=true
+StartupWMClass=io.github.design_nexus.Torrents
+Categories=Network;FileTransfer;P2P;GTK;
+Keywords=torrent;bittorrent;magnet;download;p2p;qbittorrent;seed;
+MimeType=application/x-bittorrent;x-scheme-handler/magnet;
+Actions=search;speed;
+
+[Desktop Action search]
+Name=Search
+Exec=torrents --section search
+
+[Desktop Action speed]
+Name=Speed Limits
+Exec=torrents --section speed
