@@ -385,6 +385,9 @@ pub fn show(id: Option<String>) {
         }
         p.id = id.clone();
         p.placeholder.set_visible_child_name(if id.is_some() { "pane" } else { "none" });
+        if id.is_none() {
+            p.title.set_text("");
+        }
         p.trackers.clear();
         p.peers.clear();
         p.files.clear();

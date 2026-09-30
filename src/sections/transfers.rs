@@ -435,12 +435,29 @@ fn relayout(st_rc: &Rc<RefCell<State>>) {
         // ListView follows its anchor row after a re-sort; keep the view still instead.
         glib::idle_add_local_once(move || scroll.vadjustment().set_value(value));
     }
+    sync_details(st_rc);
 }
 
 fn refresh_cells(st_rc: &Rc<RefCell<State>>) {
     let bound: Vec<(TorrentObject, Col, gtk::Widget)> = st_rc.borrow().bound.values().cloned().collect();
     for (obj, col, w) in bound {
         render(col, &obj.row(), &w);
+    }
+}
+
+/// Point the details pane at the first selected torrent, or at nothing. Also runs
+/// after the list changes: a removed or filtered-out torrent leaves the selection
+/// without GTK reporting a selection change.
+fn sync_details(st_rc: &Rc<RefCell<State>>) {
+    let sel = st_rc.borrow().selection.clone();
+    let bits = sel.selection();
+    let first = (bits.size() > 0)
+        .then(|| sel.item(bits.nth(0)).and_downcast::<TorrentObject>())
+        .flatten()
+        .map(|o| o.row().s.id.clone());
+    if st_rc.borrow().selected_id != first {
+        st_rc.borrow_mut().selected_id = first.clone();
+        details::show(first);
     }
 }
 
@@ -813,20 +830,10 @@ pub fn build(page: &Page) {
     });
     search.connect_stop_search(|e| e.set_text(""));
 
-    selection_model.connect_selection_changed(|sel, _, _| {
+    selection_model.connect_selection_changed(|_, _, _| {
         let Some(st_rc) = state() else { return };
         update_buttons(&st_rc);
-        // The details pane follows the first selected torrent.
-        let bits = sel.selection();
-        let first = (bits.size() > 0)
-            .then(|| sel.item(bits.nth(0)).and_downcast::<TorrentObject>())
-            .flatten()
-            .map(|o| o.row().s.id.clone());
-        let changed = st_rc.borrow().selected_id != first;
-        if changed {
-            st_rc.borrow_mut().selected_id = first.clone();
-            details::show(first);
-        }
+        sync_details(&st_rc);
     });
 
     cv.connect_activate(|_, pos| {
