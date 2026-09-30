@@ -1,7 +1,7 @@
 # Torrents
 
 A BitTorrent client for [Omarchy](https://omarchy.org) with qBittorrent's engine and
-feature set, styled like the other Nexus apps (Strata, Settings, Tasks): dark, calm
+feature set, styled like the other Nexus apps (Settings, Tasks): dark, calm
 and dense, themed from the Omarchy palette, and at home tiled at half-screen.
 
 ## What it does
