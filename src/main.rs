@@ -41,7 +41,12 @@ fn main() -> glib::ExitCode {
     }
     glib::set_application_name("Torrents");
 
-    let app = gtk::Application::builder().application_id(APP_ID).flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE).build();
+    let mut flags = gio::ApplicationFlags::HANDLES_COMMAND_LINE;
+    // Snapshots run beside a real instance instead of handing it their arguments.
+    if std::env::var_os("TORRENTS_SNAPSHOT").is_some() {
+        flags |= gio::ApplicationFlags::NON_UNIQUE;
+    }
+    let app = gtk::Application::builder().application_id(APP_ID).flags(flags).build();
     app.connect_command_line(|app, cl| {
         let argv: Vec<String> = cl.arguments().iter().map(|a| a.to_string_lossy().to_string()).collect();
         if argv.iter().any(|a| a == "--quit") {

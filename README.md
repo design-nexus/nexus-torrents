@@ -1,107 +1,84 @@
 # Torrents
 
-A BitTorrent client for [Omarchy](https://omarchy.org) with qBittorrent's engine and
-feature set, styled like the other Nexus apps (Settings, Tasks): dark, calm
-and dense, themed from the Omarchy palette, and at home tiled at half-screen.
+A BitTorrent client for [Omarchy](https://omarchy.org). It looks like the other
+Nexus apps (Settings, Tasks): dark, calm and dense, it takes its colours from
+your Omarchy theme, and it fits a half-screen tile.
 
-## What it does
+## Features
 
-- **The engine is qBittorrent's.** Torrents runs on
-  [libtorrent-rasterbar](https://libtorrent.org) 2.x through a small C++ shim, so it
-  supports what qBittorrent supports: v1, v2 and hybrid torrents, magnet links, DHT,
-  peer exchange, local discovery, µTP, encryption, UPnP/NAT-PMP, proxies, and
-  fast-resume.
-- **Transfers:** every torrent with its progress, status, speeds, ETA, seeds, peers,
-  ratio, category and tags.
-  - Filter by status in the sidebar (Downloading, Seeding, Completed, Paused, Active,
-    Inactive, Errored), by category or by tag, each with a live count. You can also
-    filter by name.
-  - Sort by any column. Columns you don't need can be hidden, and the less important
-    ones step aside when the window is narrow.
-  - The right-click menu has everything qBittorrent's does: resume, force resume,
-    pause, remove (optionally with the files), move, rename, speed limits, category,
-    tags, queue order, recheck, reannounce, download in order, first and last pieces
-    first, super seeding, copy name/hash/magnet, open the folder, export the .torrent.
-- **Details pane:** a pieces bar and all the figures (General), trackers you can add
-  to or remove, live peers with qBittorrent's flag letters, files with per-file
-  priorities, and a speed graph.
-- **Adding:** .torrent files, magnet links, links to .torrent files and bare
-  info-hashes, from the toolbar (<kbd>Ctrl</kbd>+<kbd>O</kbd> and <kbd>Ctrl</kbd>+<kbd>U</kbd>),
-  by dropping them on the window, from the command line, or from your browser. The
-  add dialog (like qBittorrent's) picks the folder, category, tags, name, content
-  layout and files. For a magnet link, it fetches the metadata first.
-- **Queueing, categories and tags:** limit how many torrents download and seed at
-  once. Slow torrents can be left out of the count. Categories can have their own
-  folders.
-- **Search:** qBittorrent's search plugins work as they are. **Import from
-  qBittorrent** copies the ones you already have. You can also install a plugin from a
-  file or a link. Every enabled plugin is searched at once and results stream in.
-- **Speed:** global limits, plus alternative limits (the turtle in the sidebar) that
-  can switch on a schedule. There's also a live graph.
-- **Seeding limits:** stop at a share ratio or after a seeding time, then pause,
-  remove (with or without the files), or switch to super seeding.
-- **When a download finishes:** get a notification, run a command (`%N`, `%F`, `%D`,
-  `%L`, `%I`), and move it out of the incomplete folder if you use one.
-- **Bind to your VPN:** pick its interface under Connection and torrents stop
-  whenever the VPN is down.
+- **A proven engine.** Torrents is built on
+  [libtorrent](https://libtorrent.org) 2.x. It handles v1, v2 and hybrid torrents,
+  magnet links, DHT, peer exchange, local peer discovery, µTP, encryption, UPnP and
+  NAT-PMP, proxies, and resuming where it left off.
+- **Your torrents at a glance.** Progress, status, speeds, ETA, seeds, peers, ratio,
+  category and tags.
+  - Filter from the sidebar by status, category or tag; each shows a live count.
+  - Sort by any column, and hide the columns you don't need.
+- **Details for the selected torrent.** A pieces map, trackers, connected peers, the
+  files with their priorities, and a speed graph.
+- **Adding torrents.** Drop a `.torrent` file or magnet link on the window, paste a
+  link, or open one from your browser.
+  - The add dialog sets the folder, category, tags and which files to download.
+  - For magnet links, it fetches the file list before you decide.
+- **Queue, categories and tags.** Limit how many torrents run at once and in which
+  order. Categories can save to folders of their own.
+- **Search.** Search many sites at once with community search plugins (the widely
+  used nova3 format). Plugins can be installed from a file or a link, or imported
+  from an existing qBittorrent install.
+- **Speed limits.** Global limits, plus a slow mode you can switch on from the
+  sidebar or run on a schedule.
+- **Seeding limits.** Stop at a share ratio or after a seeding time.
+- **When a download finishes.** Get a notification, run a command, or move it out
+  of an incomplete-downloads folder.
+- **Stay on your VPN.** Bind Torrents to your VPN's network interface, and torrents
+  stop whenever the VPN is down.
 
 ## Install
 
 ```sh
 git clone https://github.com/design-nexus/nexus-torrents
 cd nexus-torrents
-./install.sh            # add --default to open magnet links and .torrent files with it
+./install.sh             # add --default to open magnet links and .torrent files with it
 ```
 
-This installs any missing build dependencies (`rust gtk4 libtorrent-rasterbar boost`),
-builds with Cargo, and puts `torrents` in `~/.local/bin` with a launcher and an icon.
-Search plugins need `python3`, and adding `.torrent` links needs `curl`.
+The script installs any missing build dependencies (`rust gtk4 libtorrent-rasterbar
+boost`), builds the app, and puts `torrents` in `~/.local/bin` with a launcher entry.
+Search plugins need `python3`, and adding links to `.torrent` files needs `curl`.
 
-To remove it, run `./uninstall.sh`. Add `--purge` to also delete its settings and
-session. Your downloads are never touched.
+To remove it, run `./uninstall.sh`. Add `--purge` to also delete its settings.
+Your downloads are never touched.
 
 ## Use
 
 ```sh
-torrents                          # open (or focus) the window
-torrents file.torrent 'magnet:?…' # add to the running window
-torrents --section search         # jump to a page
-torrents --quit                   # save everything and stop
+torrents                           # open the window, or bring it to the front
+torrents file.torrent 'magnet:?…'  # add torrents to the open window
+torrents --section search          # go straight to a page
+torrents --quit                    # save and stop
 ```
 
-Closing the window quits, unless you turn on **Keep running when closed** under
-Appearance. Torrents then keeps going in the background, and `torrents` brings the
-window back.
+Closing the window quits Torrents. To keep downloading in the background instead,
+turn on **Keep running when closed** in Appearance.
 
 | Keys | |
 | --- | --- |
-| <kbd>Ctrl</kbd>+<kbd>O</kbd> / <kbd>Ctrl</kbd>+<kbd>U</kbd> | Add a .torrent file / a magnet link |
-| <kbd>Ctrl</kbd>+<kbd>F</kbd> | Filter the list (or search settings on a settings page) |
-| <kbd>Space</kbd> | Pause or resume the selection |
-| <kbd>Delete</kbd> | Remove the selection |
-| <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy the selection's magnet links |
-| <kbd>Ctrl</kbd>+<kbd>W</kbd> / <kbd>Ctrl</kbd>+<kbd>Q</kbd> | Close the window / quit |
+| <kbd>Ctrl</kbd>+<kbd>O</kbd> | Add a .torrent file |
+| <kbd>Ctrl</kbd>+<kbd>U</kbd> | Add a magnet link |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> | Filter the list |
+| <kbd>Space</kbd> | Pause or resume |
+| <kbd>Delete</kbd> | Remove |
+| <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy magnet links |
+| <kbd>Ctrl</kbd>+<kbd>Q</kbd> | Quit |
 
-## Files
+## Where things live
 
-| Where | What |
+| Path | What |
 | --- | --- |
-| `~/.config/torrents/settings.toml` | Every setting, and this window's look |
-| `~/.config/torrents/categories.toml` | Categories (with their folders) and tags |
-| `~/.config/torrents/themes/*.toml` | Your own themes |
-| `~/.local/share/torrents/resume/` | Fast-resume data, one file per torrent |
-| `~/.local/share/torrents/torrents.json` | Each torrent's category and tags |
-| `~/.local/share/torrents/session.dat` | DHT state |
-| `~/.local/share/torrents/search/engines/` | Search plugins |
-
-## Look
-
-Torrents follows `~/Projects/STYLE.md`. It uses semantic colour tokens only, ships all
-15 bundled themes, reads user themes, and follows the Omarchy theme live by default.
-It has no title bar, hides its scrollbars, and switches to an icon-only sidebar under
-980 px.
+| `~/.config/torrents/settings.toml` | Settings |
+| `~/.config/torrents/categories.toml` | Categories and tags |
+| `~/.config/torrents/themes/` | Your own themes |
+| `~/.local/share/torrents/` | The session: resume data, DHT state, search plugins |
 
 ## Licence
 
-MIT. libtorrent-rasterbar is BSD-licensed. The search helpers in `search/` are our
-own, written to be compatible with qBittorrent's plugin format.
+MIT. libtorrent is BSD-licensed.

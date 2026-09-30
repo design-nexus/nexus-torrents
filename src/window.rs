@@ -792,6 +792,9 @@ fn snapshot_and_quit(app: &gtk::Application, out: std::path::PathBuf) {
     window.set_title(Some("Torrents snapshot"));
     let env = |k: &str, d: i32| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
     window.set_default_size(env("TORRENTS_SNAPSHOT_W", 1120), env("TORRENTS_SNAPSHOT_H", 820));
+    // A fixed-size window floats in Hyprland, so the snapshot gets the size asked for
+    // instead of whatever tile is free.
+    window.set_resizable(false);
     window.present();
     let app = app.clone();
     let delay = env("TORRENTS_SNAPSHOT_DELAY", 2500) as u64;

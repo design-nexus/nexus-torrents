@@ -72,6 +72,9 @@ const DROP_ORDER: &[Col] = &[
 /// The least room the Name column gets before other columns start to hide.
 const NAME_MIN: i32 = 260;
 
+/// Room the table itself takes around its columns (row margins, borders, padding).
+const ROW_INSET: i32 = 32;
+
 struct State {
     store: gio::ListStore,
     filter: gtk::CustomFilter,
@@ -92,6 +95,7 @@ struct State {
     buttons: Vec<gtk::Widget>,
     /// The table width the columns were last fitted to.
     fitted: i32,
+    queue_box: gtk::Box,
     selected_id: Option<String>,
 }
 
@@ -579,7 +583,7 @@ fn apply_column_visibility(columns: &[(Col, gtk::ColumnViewColumn)], width: i32)
     let mut show = wanted.clone();
     if width > 0 {
         for drop in DROP_ORDER {
-            if fixed(&show) + NAME_MIN <= width {
+            if fixed(&show) + NAME_MIN + ROW_INSET <= width {
                 break;
             }
             show.retain(|c| c != drop);
@@ -592,13 +596,18 @@ fn apply_column_visibility(columns: &[(Col, gtk::ColumnViewColumn)], width: i32)
 
 fn fit_columns() {
     let Some(st_rc) = state() else { return };
-    // The scrolled window's width, not the view's: the view never gets narrower than its columns.
-    let width = st_rc.borrow().scroll.width();
+    // The table card's width, not the view's: the view never gets narrower than its
+    // columns. (The card is allocated even while the empty state shows.)
+    let width = st_rc.borrow().empty.width();
     if width <= 0 || width == st_rc.borrow().fitted {
         return;
     }
     st_rc.borrow_mut().fitted = width;
-    let columns = st_rc.borrow().columns.clone();
+    let (columns, queue_box) = {
+        let st = st_rc.borrow();
+        (st.columns.clone(), st.queue_box.clone())
+    };
+    queue_box.set_visible(width >= 720);
     apply_column_visibility(&columns, width);
 }
 
@@ -653,9 +662,12 @@ pub fn build(page: &Page) {
     for b in [&resume, &pause, &remove] {
         toolbar.append(b);
     }
-    toolbar.append(&gtk::Separator::new(gtk::Orientation::Vertical));
-    toolbar.append(&up);
-    toolbar.append(&down);
+    // The queue buttons step aside when the window is tight (the menu has them too).
+    let queue_box = widgets::hbox(6);
+    queue_box.append(&gtk::Separator::new(gtk::Orientation::Vertical));
+    queue_box.append(&up);
+    queue_box.append(&down);
+    toolbar.append(&queue_box);
 
     let search = gtk::SearchEntry::new();
     search.set_placeholder_text(Some("Filter by name"));
@@ -929,6 +941,7 @@ pub fn build(page: &Page) {
         title,
         buttons: vec![resume.upcast(), pause.upcast(), remove.upcast(), up.upcast(), down.upcast()],
         fitted: 0,
+        queue_box,
         selected_id: None,
     };
     let st = Rc::new(RefCell::new(st));
