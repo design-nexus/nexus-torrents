@@ -1,4 +1,4 @@
-//! Theming. The whole stylesheet is written against Strata's semantic colour
+//! Theming. The whole stylesheet is written against the semantic colour
 //! tokens (`@theme_bg`, `@theme_accent`, …); a theme is just a value for each.
 
 use crate::{paths, prefs};

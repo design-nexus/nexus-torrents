@@ -1,4 +1,4 @@
-/* Torrents — styled after Strata's settings dialog. Every colour comes from the
+/* Torrents — Nexus app style (see ~/Projects/STYLE.md). Every colour comes from the
  * @theme_* tokens defined by the active palette (see theme.rs). */
 
 window.torrents-window {

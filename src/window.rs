@@ -1,4 +1,4 @@
-//! The main window: Strata-style navigation sidebar (transfer filters with live
+//! The main window: navigation sidebar (transfer filters with live
 //! counts, categories, tags, then Search and the settings pages) and a stack of
 //! pages that are built the first time they're shown. Every transfer filter
 //! shows the same Transfers page.
@@ -132,7 +132,7 @@ fn build(app: &gtk::Application) {
     let window =
         gtk::ApplicationWindow::builder().application(app).title("Torrents").default_width(1120).default_height(800).build();
     window.add_css_class("torrents-window");
-    // No client-side titlebar: Hyprland manages the window, like Strata.
+    // No client-side titlebar: Hyprland manages the window.
     window.set_titlebar(Some(&gtk::Box::new(gtk::Orientation::Horizontal, 0)));
     window.set_icon_name(Some("io.github.design_nexus.Torrents"));
 

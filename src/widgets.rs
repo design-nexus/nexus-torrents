@@ -1,4 +1,4 @@
-//! Strata-style building blocks: pages, groups and option rows.
+//! Nexus-style building blocks: pages, groups and option rows.
 
 use crate::{cmd, paths};
 use gtk::pango;
@@ -193,7 +193,7 @@ pub fn open_config_button(files: &[PathBuf]) -> gtk::Widget {
 
 // ---------- Rows ----------
 
-/// A Strata option card: title and description on the left, control on the right.
+/// An option card: title and description on the left, control on the right.
 pub fn row(title: &str, desc: &str, control: Option<&gtk::Widget>) -> gtk::Box {
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 14);
     row.add_css_class("settings-option");

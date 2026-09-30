@@ -1,5 +1,4 @@
-//! Torrents — a BitTorrent client for Omarchy on libtorrent (qBittorrent's
-//! engine), styled after the Strata file manager.
+//! Torrents — a BitTorrent client for Omarchy, built on libtorrent.
 
 mod actions;
 mod add_dialog;
