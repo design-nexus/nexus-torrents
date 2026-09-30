@@ -175,9 +175,11 @@ impl<T: 'static> Table<T> {
             fit.push((col, c.width));
         }
         // When the table narrows, hide columns from the right (the expanding one stays).
+        // Measure the scrolled window around it: the view itself never gets narrower
+        // than its columns.
         let fitted = std::cell::Cell::new(0);
         view.add_tick_callback(move |view, _| {
-            let width = view.width();
+            let width = view.parent().map(|p| p.width()).unwrap_or(0);
             if width > 0 && width != fitted.get() {
                 fitted.set(width);
                 let mut used: i32 = 200 + fit.iter().map(|(_, w)| *w).sum::<i32>();
@@ -196,8 +198,9 @@ impl<T: 'static> Table<T> {
         let sorter = view.sorter();
         sorted.set_sorter(sorter.as_ref());
 
+        // External, not Never: Never would make the window as wide as every column.
         let scroll = gtk::ScrolledWindow::builder()
-            .hscrollbar_policy(gtk::PolicyType::Never)
+            .hscrollbar_policy(gtk::PolicyType::External)
             .vscrollbar_policy(gtk::PolicyType::External)
             .child(&view)
             .vexpand(true)

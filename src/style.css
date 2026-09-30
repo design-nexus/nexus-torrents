@@ -722,7 +722,7 @@ window.torrents-window .segmented > button.selected {
 /* Toolbar */
 window.torrents-window button.tool-button {
   min-width: 32px;
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 .toolbar separator {

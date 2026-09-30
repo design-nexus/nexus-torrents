@@ -575,7 +575,8 @@ fn apply_column_visibility(columns: &[(Col, gtk::ColumnViewColumn)], width: i32)
 
 fn fit_columns() {
     let Some(st_rc) = state() else { return };
-    let width = st_rc.borrow().view.width();
+    // The scrolled window's width, not the view's: the view never gets narrower than its columns.
+    let width = st_rc.borrow().scroll.width();
     if width <= 0 || width == st_rc.borrow().fitted {
         return;
     }
@@ -642,7 +643,7 @@ pub fn build(page: &Page) {
     let search = gtk::SearchEntry::new();
     search.set_placeholder_text(Some("Filter by name"));
     search.set_hexpand(true);
-    search.set_width_chars(8);
+    search.set_width_chars(4);
     search.add_css_class("table-search");
     toolbar.append(&search);
 
@@ -715,8 +716,9 @@ pub fn build(page: &Page) {
         });
     }
 
+    // External, not Never: Never would make the window as wide as every column.
     let scroll = gtk::ScrolledWindow::builder()
-        .hscrollbar_policy(gtk::PolicyType::Never)
+        .hscrollbar_policy(gtk::PolicyType::External)
         .vscrollbar_policy(gtk::PolicyType::External)
         .child(&cv)
         .vexpand(true)

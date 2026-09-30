@@ -829,7 +829,10 @@ fn snapshot_and_quit(app: &gtk::Application, out: std::path::PathBuf) {
             if let (Some(node), Some(renderer)) = (snapshot.to_node(), window.renderer()) {
                 let texture = renderer.render_texture(node, None);
                 match texture.save_to_png(&out) {
-                    Ok(()) => println!("snapshot {w}x{h} -> {}", out.display()),
+                    Ok(()) => {
+                        let (min, _, _, _) = window.measure(gtk::Orientation::Horizontal, -1);
+                        println!("snapshot {w}x{h} (window needs at least {min} px) -> {}", out.display())
+                    }
                     Err(e) => eprintln!("snapshot failed: {e}"),
                 }
             }
