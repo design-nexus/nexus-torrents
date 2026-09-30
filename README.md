@@ -36,17 +36,16 @@ your Omarchy theme, and it fits a half-screen tile.
 ## Install
 
 ```sh
-git clone https://github.com/design-nexus/nexus-torrents
-cd nexus-torrents
-./install.sh             # add --default to open magnet links and .torrent files with it
+curl -fsSL https://raw.githubusercontent.com/design-nexus/nexus-torrents/main/install.sh | bash
 ```
 
-The script installs any missing build dependencies (`rust gtk4 libtorrent-rasterbar
-boost`), builds the app, and puts `torrents` in `~/.local/bin` with a launcher entry.
+This installs any missing build dependencies (`rust gtk4 libtorrent-rasterbar boost`),
+builds the app, and puts `torrents` in `~/.local/bin` with a launcher entry. Add
+`-s -- --default` after `bash` to also open magnet links and `.torrent` files with it.
 Search plugins need `python3`, and adding links to `.torrent` files needs `curl`.
 
-To remove it, run `./uninstall.sh`. Add `--purge` to also delete its settings.
-Your downloads are never touched.
+To remove it, run the same line with `uninstall.sh` in place of `install.sh`. Add
+`-s -- --purge` to also delete its settings. Your downloads are never touched.
 
 ## Use
 
