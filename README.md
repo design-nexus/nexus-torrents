@@ -1,8 +1,7 @@
 # Torrents
 
-A BitTorrent client for [Omarchy](https://omarchy.org). It looks like the other
-Nexus apps (Settings, Tasks): dark, calm and dense, it takes its colours from
-your Omarchy theme, and it fits a half-screen tile.
+A BitTorrent client for [Omarchy](https://omarchy.org). It takes its colours from
+your Omarchy theme and fits a half-screen tile.
 
 ## Features
 
