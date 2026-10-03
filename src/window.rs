@@ -29,6 +29,7 @@ struct Ui {
     current: String,
     overlay: gtk::Overlay,
     compact_hide: Vec<gtk::Widget>,
+    nav: gtk::Box,
 }
 
 thread_local! {
@@ -143,8 +144,9 @@ fn build(app: &gtk::Application) {
     nav.add_css_class("settings-navigation");
     nav.set_hexpand(false);
     let heading = widgets::label("TORRENTS", "menu-heading");
+    heading.set_hexpand(true);
     let mut compact_hide: Vec<gtk::Widget> = vec![heading.clone().upcast()];
-    nav.append(&heading);
+    nav.append(&nav_head(&heading));
 
     let search = gtk::SearchEntry::new();
     search.set_placeholder_text(Some("Search settings"));
@@ -295,6 +297,10 @@ fn build(app: &gtk::Application) {
                 actions::add_magnet_dialog("");
                 glib::Propagation::Stop
             }
+            gdk::Key::b if ctrl => {
+                toggle_sidebar();
+                glib::Propagation::Stop
+            }
             gdk::Key::q if ctrl => {
                 app2.quit();
                 glib::Propagation::Stop
@@ -355,17 +361,13 @@ fn build(app: &gtk::Application) {
         let nav = nav.clone();
         move |w: &gtk::ApplicationWindow| {
             let width = if w.width() > 0 { w.width() } else { w.default_width() };
-            let compact = width > 0 && width < 980;
-            if compact == nav.has_css_class("compact") && nav.has_css_class("sized") {
+            let narrow = width > 0 && width < 980;
+            if narrow == NARROW.with(|n| n.get()) && nav.has_css_class("sized") {
                 return;
             }
             nav.add_css_class("sized");
-            if compact {
-                nav.add_css_class("compact");
-            } else {
-                nav.remove_css_class("compact");
-            }
-            set_compact(compact);
+            set_narrow(narrow);
+            apply_compact(narrow || prefs::get().sidebar_collapsed);
         }
     };
     let aw = apply_width.clone();
@@ -394,6 +396,7 @@ fn build(app: &gtk::Application) {
         current: String::new(),
         overlay,
         compact_hide,
+        nav: nav.clone(),
     };
     UI.with(|u| *u.borrow_mut() = Some(Rc::new(RefCell::new(ui))));
     rebuild_lists();
@@ -526,6 +529,11 @@ fn rebuild_lists() {
     if let Some(u) = live::latest() {
         update_counts(&u);
     }
+    // New entries start expanded; centre their icons if the sidebar is icon-only.
+    if COMPACT.with(|c| c.get()) {
+        let nav = ui.borrow().nav.clone();
+        centre_icons(nav.upcast_ref(), true);
+    }
 }
 
 fn update_counts(u: &crate::engine::Update) {
@@ -539,21 +547,70 @@ fn update_counts(u: &crate::engine::Update) {
     }
 }
 
-fn set_compact(compact: bool) {
-    COMPACT.with(|c| c.set(compact));
-    NARROW.with(|n| n.set(compact));
+/// The button that collapses the sidebar to icons, beside the app heading.
+fn nav_head(heading: &gtk::Label) -> gtk::Box {
+    let row = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    row.add_css_class("nav-head");
+    row.append(heading);
+    let button = gtk::Button::from_icon_name("sidebar-show-symbolic");
+    button.add_css_class("nav-collapse");
+    button.set_tooltip_text(Some("Collapse or expand the sidebar (Ctrl+B)"));
+    button.set_valign(gtk::Align::Center);
+    button.connect_clicked(|_| toggle_sidebar());
+    row.append(&button);
+    row
+}
+
+/// A narrow window lays its pages out for a half-screen tile.
+fn set_narrow(narrow: bool) {
+    NARROW.with(|n| n.set(narrow));
     let Some(ui) = ui() else { return };
-    let (hide, pages): (Vec<gtk::Widget>, Vec<gtk::ScrolledWindow>) = {
+    let pages: Vec<gtk::ScrolledWindow> = ui.borrow().pages.values().cloned().collect();
+    for page in pages {
+        mark_page(&page, narrow);
+    }
+    transfers::set_narrow(narrow);
+}
+
+/// The sidebar shows only icons: hide the labels, centre the icons and the toggle.
+fn apply_compact(compact: bool) {
+    COMPACT.with(|c| c.set(compact));
+    let Some(ui) = ui() else { return };
+    let (hide, nav) = {
         let u = ui.borrow();
-        (u.compact_hide.clone(), u.pages.values().cloned().collect())
+        (u.compact_hide.clone(), u.nav.clone())
     };
+    if compact {
+        nav.add_css_class("compact");
+    } else {
+        nav.remove_css_class("compact");
+    }
     for w in hide {
         w.set_visible(!compact);
     }
-    for page in pages {
-        mark_page(&page, compact);
+    centre_icons(nav.upcast_ref(), compact);
+}
+
+fn centre_icons(w: &gtk::Widget, compact: bool) {
+    if w.has_css_class("nav-item")
+        && let Some(content) = w.downcast_ref::<gtk::Button>().and_then(|b| b.child())
+    {
+        content.set_halign(if compact { gtk::Align::Center } else { gtk::Align::Fill });
     }
-    transfers::set_narrow(compact);
+    if w.has_css_class("nav-collapse") {
+        w.set_halign(if compact { gtk::Align::Center } else { gtk::Align::End });
+        w.set_hexpand(compact);
+    }
+    let mut child = w.first_child();
+    while let Some(c) = child {
+        centre_icons(&c, compact);
+        child = c.next_sibling();
+    }
+}
+
+pub fn toggle_sidebar() {
+    prefs::update(|p| p.sidebar_collapsed = !p.sidebar_collapsed);
+    apply_compact(NARROW.with(|n| n.get()) || prefs::get().sidebar_collapsed);
 }
 
 fn mark_page(page: &gtk::ScrolledWindow, narrow: bool) {
