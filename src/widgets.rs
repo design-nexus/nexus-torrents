@@ -1,10 +1,8 @@
 //! Nexus-style building blocks: pages, groups and option rows.
 
-use crate::{cmd, paths};
 use gtk::pango;
 use gtk::prelude::*;
 use std::cell::RefCell;
-use std::path::PathBuf;
 use std::rc::Rc;
 
 // ---------- Search registry ----------
@@ -42,32 +40,15 @@ pub struct Page {
     pub body: gtk::Box,
 }
 
-pub fn page(section: &str, title: &str, description: &str, files: &[PathBuf]) -> Page {
+/// A page. Its name shows in the top bar (or the settings dialog's header), so
+/// the page itself starts straight with its content.
+pub fn page(section: &str) -> Page {
     CURRENT_SECTION.with(|s| *s.borrow_mut() = section.to_string());
     CURRENT_GROUP.with(|g| *g.borrow_mut() = None);
 
     let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
     body.add_css_class("settings-page");
-
-    let header = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-    header.add_css_class("section-header");
-    let text = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    text.set_hexpand(true);
-    let t = gtk::Label::new(Some(title));
-    t.add_css_class("section-title");
-    t.set_xalign(0.0);
-    let d = gtk::Label::new(Some(description));
-    d.add_css_class("section-description");
-    d.set_xalign(0.0);
-    d.set_wrap(true);
-    text.append(&t);
-    text.append(&d);
-    header.append(&text);
-    if !files.is_empty() {
-        header.append(&open_config_button(files));
-    }
-    body.append(&header);
-
+    body.add_css_class(&format!("page-{section}"));
     body.set_hexpand(true);
 
     let root = gtk::ScrolledWindow::builder()
@@ -92,13 +73,16 @@ impl Page {
     pub fn group(&self, title: &str) -> Group {
         let wrapper = gtk::Box::new(gtk::Orientation::Vertical, 0);
         wrapper.add_css_class("settings-group");
+        wrapper.set_widget_name(title);
         if !title.is_empty() {
             let l = gtk::Label::new(Some(&title.to_uppercase()));
             l.add_css_class("group-title");
             l.set_xalign(0.0);
             wrapper.append(&l);
         }
-        let list = gtk::Box::new(gtk::Orientation::Vertical, 6);
+        // Rows join into one card, split by hairlines.
+        let list = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        list.add_css_class("group-list");
         wrapper.append(&list);
         self.body.append(&wrapper);
         CURRENT_GROUP.with(|g| *g.borrow_mut() = Some(wrapper.clone().upcast()));
@@ -144,51 +128,6 @@ impl Group {
         // Notes sit just under the group title.
         self.wrapper.insert_child_after(&l, self.wrapper.first_child().as_ref());
     }
-}
-
-// ---------- Open config ----------
-
-pub fn open_config_button(files: &[PathBuf]) -> gtk::Widget {
-    let make_content = || {
-        let b = gtk::Box::new(gtk::Orientation::Horizontal, 8);
-        b.append(&gtk::Image::from_icon_name("text-editor-symbolic"));
-        b.append(&gtk::Label::new(Some("Open config")));
-        b
-    };
-    if files.len() == 1 {
-        let path = files[0].clone();
-        let button = gtk::Button::new();
-        button.set_child(Some(&make_content()));
-        button.add_css_class("open-config");
-        button.set_valign(gtk::Align::Center);
-        button.set_tooltip_text(Some(&paths::pretty(&path)));
-        button.connect_clicked(move |_| cmd::open_in_editor(&path));
-        return button.upcast();
-    }
-    let menu = gtk::MenuButton::new();
-    menu.set_child(Some(&make_content()));
-    menu.add_css_class("open-config");
-    menu.set_valign(gtk::Align::Center);
-    let list = gtk::Box::new(gtk::Orientation::Vertical, 2);
-    let popover = gtk::Popover::new();
-    for path in files {
-        let b = gtk::Button::with_label(&paths::pretty(path));
-        b.add_css_class("flat");
-        if let Some(label) = b.child().and_downcast::<gtk::Label>() {
-            label.set_xalign(0.0);
-            label.add_css_class("mono");
-        }
-        let p = path.clone();
-        let pop = popover.clone();
-        b.connect_clicked(move |_| {
-            pop.popdown();
-            cmd::open_in_editor(&p);
-        });
-        list.append(&b);
-    }
-    popover.set_child(Some(&list));
-    menu.set_popover(Some(&popover));
-    menu.upcast()
 }
 
 // ---------- Rows ----------

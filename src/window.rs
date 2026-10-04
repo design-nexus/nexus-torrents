@@ -1,12 +1,14 @@
-//! The main window: navigation sidebar (transfer filters with live
-//! counts, categories, tags, then Search and the settings pages) and a stack of
-//! pages that are built the first time they're shown. Every transfer filter
-//! shows the same Transfers page.
+//! The main window: a top bar (sidebar toggle, where you are, search,
+//! settings, close), the navigation sidebar (transfer filters with live counts,
+//! categories, tags, then Search), a stack of pages built the first time
+//! they're shown, and a status bar with the overall speeds. Every transfer
+//! filter shows the same Transfers page. The settings pages open in the
+//! settings dialog instead (see `settings_dialog`).
 
 use crate::model::{Filter, STATUS_FILTERS};
 use crate::sections::{self, Section, transfers};
-use crate::widgets::{self, SEARCH};
-use crate::{actions, fmt, live, prefs, store, theme};
+use crate::widgets;
+use crate::{actions, fmt, live, prefs, settings_dialog, store, theme};
 use gtk::prelude::*;
 use gtk::{gdk, gio, glib};
 use std::cell::RefCell;
@@ -20,16 +22,16 @@ struct Ui {
     /// Nav buttons by id: filter ids ("all", "cat:Movies"…) and page ids.
     nav_items: HashMap<String, gtk::Button>,
     nav_counts: HashMap<String, gtk::Label>,
-    nav_groups: Vec<(gtk::Label, Vec<String>)>,
     categories_box: gtk::Box,
     tags_box: gtk::Box,
-    filter_groups: Vec<gtk::Widget>,
     pages: HashMap<&'static str, gtk::ScrolledWindow>,
     sections: Vec<Section>,
     current: String,
     overlay: gtk::Overlay,
     compact_hide: Vec<gtk::Widget>,
     nav: gtk::Box,
+    /// The current page's name, in the top bar.
+    crumb: gtk::Label,
 }
 
 thread_local! {
@@ -115,6 +117,7 @@ fn nav_button(id: &str, title: &str, icon: &str, tooltip: &str, count: bool) -> 
 
 fn group_heading(title: &str, add: Option<(&str, fn())>) -> (gtk::Box, gtk::Label) {
     let row = widgets::hbox(4);
+    row.add_css_class("nav-group-row");
     let g = widgets::label(&title.to_uppercase(), "nav-group");
     g.set_hexpand(true);
     row.append(&g);
@@ -143,26 +146,16 @@ fn build(app: &gtk::Application) {
     let nav = gtk::Box::new(gtk::Orientation::Vertical, 0);
     nav.add_css_class("settings-navigation");
     nav.set_hexpand(false);
-    let heading = widgets::label("TORRENTS", "menu-heading");
-    heading.set_hexpand(true);
-    let mut compact_hide: Vec<gtk::Widget> = vec![heading.clone().upcast()];
-    nav.append(&nav_head(&heading));
-
-    let search = gtk::SearchEntry::new();
-    search.set_placeholder_text(Some("Search settings"));
-    search.add_css_class("settings-search");
-    nav.append(&search);
-    compact_hide.push(search.clone().upcast());
+    let mut compact_hide: Vec<gtk::Widget> = Vec::new();
 
     let list = gtk::Box::new(gtk::Orientation::Vertical, 0);
     let mut nav_items = HashMap::new();
     let mut nav_counts = HashMap::new();
-    let mut nav_groups: Vec<(gtk::Label, Vec<String>)> = Vec::new();
-    let mut filter_groups: Vec<gtk::Widget> = Vec::new();
 
     // Transfers
     let transfers_box = widgets::vbox(0);
     let (h, g) = group_heading("Transfers", None);
+    h.add_css_class("first");
     compact_hide.push(g.clone().upcast());
     transfers_box.append(&h);
     for (id, title, icon) in STATUS_FILTERS {
@@ -176,33 +169,27 @@ fn build(app: &gtk::Application) {
         nav_items.insert(id.to_string(), b);
     }
     list.append(&transfers_box);
-    filter_groups.push(transfers_box.upcast());
 
     // Categories and tags are filled by `rebuild_lists`.
     let categories_box = widgets::vbox(0);
     list.append(&categories_box);
-    filter_groups.push(categories_box.clone().upcast());
     let tags_box = widgets::vbox(0);
     list.append(&tags_box);
-    filter_groups.push(tags_box.clone().upcast());
 
     let mut last_group = "";
     // The Transfers page has no nav item of its own: the filters above lead to it.
-    for s in sections.iter().filter(|s| !s.group.is_empty()) {
+    // Settings pages live in the settings dialog.
+    for s in sections.iter().filter(|s| !s.group.is_empty() && s.group != settings_dialog::GROUP) {
         if s.group != last_group {
-            let g = widgets::label(&s.group.to_uppercase(), "nav-group");
-            compact_hide.push(g.clone().upcast());
-            list.append(&g);
-            nav_groups.push((g, Vec::new()));
+            let (h, g) = group_heading(s.group, None);
+            compact_hide.push(g.upcast());
+            list.append(&h);
             last_group = s.group;
         }
         let (b, _, label) = nav_button(s.id, s.title, s.icon, s.description, false);
         compact_hide.push(label.upcast());
         list.append(&b);
         nav_items.insert(s.id.to_string(), b);
-        if let Some(g) = nav_groups.last_mut() {
-            g.1.push(s.id.to_string());
-        }
     }
     let nav_scroll = gtk::ScrolledWindow::builder()
         .hscrollbar_policy(gtk::PolicyType::Never)
@@ -213,50 +200,6 @@ fn build(app: &gtk::Application) {
         .build();
     nav.append(&nav_scroll);
 
-    // Footer: overall speeds, the alternative-speed switch, and the version.
-    let footer = widgets::vbox(6);
-    footer.add_css_class("nav-footer");
-    let rates = widgets::hbox(12);
-    let down = widgets::label("↓ 0 B/s", "footer-rate");
-    down.add_css_class("mono");
-    let up = widgets::label("↑ 0 B/s", "footer-rate");
-    up.add_css_class("mono");
-    rates.append(&down);
-    rates.append(&up);
-    footer.append(&rates);
-    let line = widgets::hbox(6);
-    let version = widgets::label(concat!("Torrents ", env!("CARGO_PKG_VERSION")), "dim");
-    version.set_hexpand(true);
-    version.set_ellipsize(gtk::pango::EllipsizeMode::End);
-    line.append(&version);
-    line.append(&alt_speed_chip());
-    footer.append(&line);
-    let net = widgets::label("", "footer-net");
-    net.add_css_class("mono");
-    footer.append(&net);
-    nav.append(&footer);
-    compact_hide.push(footer.clone().upcast());
-    {
-        let (down, up, net) = (down.clone(), up.clone(), net.clone());
-        live::on_tick(&footer, move |u| {
-            down.set_text(&format!("↓ {}", fmt::net_rate(u.stats.dl_rate as f64)));
-            up.set_text(&format!("↑ {}", fmt::net_rate(u.stats.ul_rate as f64)));
-            let mut parts = vec![format!("Port {}", u.stats.listen_port)];
-            if prefs::get().dht {
-                parts.push(format!("DHT {}", u.stats.dht_nodes));
-            }
-            if let Some(free) = free_space(&prefs::get().save_path) {
-                parts.push(format!("{} free", fmt::bytes(free as f64)));
-            }
-            net.set_text(&parts.join(" · "));
-            net.set_tooltip_text(Some(if u.stats.has_incoming {
-                "Listening for incoming connections."
-            } else {
-                "Not listening: check the port and network interface in Connection."
-            }));
-        });
-    }
-
     // ----- Content -----
     let stack = gtk::Stack::new();
     stack.add_css_class("settings-content");
@@ -265,28 +208,56 @@ fn build(app: &gtk::Application) {
     stack.set_transition_duration(if prefs::get().reduce_motion { 0 } else { 160 });
 
     let body = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+    body.set_vexpand(true);
     body.append(&nav);
     body.append(&stack);
 
+    let (top, crumb) = top_bar(&window);
+    let frame = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    frame.add_css_class("window-frame");
+    frame.append(&top);
+    frame.append(&body);
+    frame.append(&status_bar());
+
     let overlay = gtk::Overlay::new();
-    overlay.set_child(Some(&body));
+    overlay.set_child(Some(&frame));
     window.set_child(Some(&overlay));
 
     // ----- Keys -----
     let keys = gtk::EventControllerKey::new();
     keys.set_propagation_phase(gtk::PropagationPhase::Capture);
-    let s2 = search.clone();
     let w2 = window.clone();
     let app2 = app.clone();
     keys.connect_key_pressed(move |_, key, _, mods| {
         let ctrl = mods.contains(gdk::ModifierType::CONTROL_MASK);
+        if settings_dialog::is_open() {
+            return match key {
+                gdk::Key::Escape => {
+                    settings_dialog::escape();
+                    glib::Propagation::Stop
+                }
+                gdk::Key::f if ctrl => {
+                    settings_dialog::focus_search();
+                    glib::Propagation::Stop
+                }
+                gdk::Key::q if ctrl => {
+                    app2.quit();
+                    glib::Propagation::Stop
+                }
+                gdk::Key::w if ctrl => {
+                    w2.close();
+                    glib::Propagation::Stop
+                }
+                _ => glib::Propagation::Proceed,
+            };
+        }
         match key {
             gdk::Key::f if ctrl => {
-                if is_transfers() {
-                    transfers::focus_search();
-                } else {
-                    s2.grab_focus();
-                }
+                find();
+                glib::Propagation::Stop
+            }
+            gdk::Key::F1 => {
+                show_shortcuts();
                 glib::Propagation::Stop
             }
             gdk::Key::o if ctrl => {
@@ -309,16 +280,10 @@ fn build(app: &gtk::Application) {
                 w2.close();
                 glib::Propagation::Stop
             }
-            gdk::Key::Escape if s2.has_focus() || !s2.text().is_empty() => {
-                s2.set_text("");
-                glib::Propagation::Stop
-            }
             _ => glib::Propagation::Proceed,
         }
     });
     window.add_controller(keys);
-    search.connect_search_changed(|e| filter(&e.text()));
-    search.connect_activate(|_| focus_first_hit());
 
     // Drop .torrent files or magnet links anywhere on the window.
     let drop = gtk::DropTarget::new(glib::Type::INVALID, gdk::DragAction::COPY);
@@ -362,6 +327,7 @@ fn build(app: &gtk::Application) {
         move |w: &gtk::ApplicationWindow| {
             let width = if w.width() > 0 { w.width() } else { w.default_width() };
             let narrow = width > 0 && width < 980;
+            settings_dialog::fit(w);
             if narrow == NARROW.with(|n| n.get()) && nav.has_css_class("sized") {
                 return;
             }
@@ -387,16 +353,15 @@ fn build(app: &gtk::Application) {
         stack,
         nav_items,
         nav_counts,
-        nav_groups,
         categories_box,
         tags_box,
-        filter_groups,
         pages: HashMap::new(),
         sections,
         current: String::new(),
         overlay,
         compact_hide,
         nav: nav.clone(),
+        crumb,
     };
     UI.with(|u| *u.borrow_mut() = Some(Rc::new(RefCell::new(ui))));
     rebuild_lists();
@@ -547,18 +512,139 @@ fn update_counts(u: &crate::engine::Update) {
     }
 }
 
-/// The button that collapses the sidebar to icons, beside the app heading.
-fn nav_head(heading: &gtk::Label) -> gtk::Box {
-    let row = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    row.add_css_class("nav-head");
-    row.append(heading);
-    let button = gtk::Button::from_icon_name("sidebar-show-symbolic");
-    button.add_css_class("nav-collapse");
-    button.set_tooltip_text(Some("Collapse or expand the sidebar (Ctrl+B)"));
-    button.set_valign(gtk::Align::Center);
-    button.connect_clicked(|_| toggle_sidebar());
-    row.append(&button);
-    row
+/// The bar across the top: the sidebar toggle and where you are on the left;
+/// search, settings and close on the right.
+fn top_bar(window: &gtk::ApplicationWindow) -> (gtk::Box, gtk::Label) {
+    let bar = gtk::Box::new(gtk::Orientation::Horizontal, 4);
+    bar.add_css_class("top-bar");
+    let toggle = bar_button("sidebar-show-symbolic", "Collapse or expand the sidebar (Ctrl+B)");
+    toggle.connect_clicked(|_| toggle_sidebar());
+    bar.append(&toggle);
+    let crumbs = widgets::hbox(10);
+    crumbs.add_css_class("crumbs");
+    crumbs.append(&widgets::label("Torrents", "crumb-root"));
+    crumbs.append(&widgets::label("/", "crumb-sep"));
+    let crumb = widgets::label("", "crumb");
+    crumb.set_ellipsize(gtk::pango::EllipsizeMode::End);
+    crumbs.append(&crumb);
+    crumbs.set_hexpand(true);
+    bar.append(&crumbs);
+    let search = bar_button("system-search-symbolic", "Filter the list (Ctrl+F)");
+    search.connect_clicked(|_| find());
+    bar.append(&search);
+    let gear = bar_button("emblem-system-symbolic", "Settings");
+    gear.connect_clicked(|_| settings_dialog::open(None));
+    bar.append(&gear);
+    let close = bar_button("window-close-symbolic", "Close (Ctrl+W)");
+    let w = window.clone();
+    close.connect_clicked(move |_| w.close());
+    bar.append(&close);
+    (bar, crumb)
+}
+
+fn bar_button(icon: &str, tooltip: &str) -> gtk::Button {
+    let b = gtk::Button::from_icon_name(icon);
+    b.add_css_class("bar-button");
+    b.set_tooltip_text(Some(tooltip));
+    b.set_valign(gtk::Align::Center);
+    b
+}
+
+/// Ctrl+F: filter the transfers list (going to it first if need be).
+fn find() {
+    if !is_transfers() && current() != "search" {
+        navigate("all");
+    }
+    if current() == "search" {
+        sections::search::focus_query();
+    } else {
+        transfers::focus_search();
+    }
+}
+
+/// The bar along the bottom: the shortcuts on the left; the overall speeds,
+/// the alternative-speed switch and the connection on the right.
+fn status_bar() -> gtk::Box {
+    let bar = widgets::hbox(16);
+    bar.add_css_class("status-bar");
+    let help = gtk::Button::new();
+    help.add_css_class("status-help");
+    let content = widgets::hbox(10);
+    content.append(&widgets::label("F1", "status-key"));
+    content.append(&widgets::label("Shortcuts", ""));
+    help.set_child(Some(&content));
+    help.set_tooltip_text(Some("Show the keyboard shortcuts"));
+    help.connect_clicked(|_| show_shortcuts());
+    bar.append(&help);
+    let spacer = widgets::hbox(0);
+    spacer.set_hexpand(true);
+    bar.append(&spacer);
+    let readout = widgets::label("", "status-readout");
+    readout.set_ellipsize(gtk::pango::EllipsizeMode::Start);
+    bar.append(&readout);
+    bar.append(&alt_speed_chip());
+    let r = readout.clone();
+    live::on_tick(&readout, move |u| {
+        let mut parts = vec![
+            format!("↓ {}", fmt::net_rate(u.stats.dl_rate as f64)),
+            format!("↑ {}", fmt::net_rate(u.stats.ul_rate as f64)),
+            format!("Port {}", u.stats.listen_port),
+        ];
+        if prefs::get().dht {
+            parts.push(format!("DHT {}", u.stats.dht_nodes));
+        }
+        if let Some(free) = free_space(&prefs::get().save_path) {
+            parts.push(format!("{} free", fmt::bytes(free as f64)));
+        }
+        r.set_text(&parts.join(" · "));
+        r.set_tooltip_text(Some(if u.stats.has_incoming {
+            "Listening for incoming connections."
+        } else {
+            "Not listening: check the port and network interface in Connection."
+        }));
+    });
+    bar
+}
+
+/// Every keyboard shortcut, for the shortcuts dialog and Appearance.
+pub const SHORTCUTS: &[(&[&str], &str)] = &[
+    (&["Ctrl", "O"], "Add a .torrent file"),
+    (&["Ctrl", "U"], "Add a magnet link"),
+    (&["Ctrl", "F"], "Filter the list"),
+    (&["Space"], "Pause or resume the selection"),
+    (&["Delete"], "Remove the selection"),
+    (&["Ctrl", "C"], "Copy magnet links of the selection"),
+    (&["Ctrl", "A"], "Select every torrent in view"),
+    (&["Esc"], "Clear the search"),
+    (&["Ctrl", "B"], "Collapse or expand the sidebar"),
+    (&["F1"], "Show these shortcuts"),
+    (&["Ctrl", "W"], "Close the window"),
+    (&["Ctrl", "Q"], "Quit"),
+];
+
+pub fn show_shortcuts() {
+    let (dialog, card) = widgets::dialog("Keyboard shortcuts", 460);
+    let list = widgets::vbox(0);
+    list.add_css_class("group-list");
+    for (keys, what) in SHORTCUTS {
+        list.append(&widgets::row(what, "", Some(widgets::keycaps(keys).upcast_ref())));
+    }
+    card.append(&list);
+    let close = gtk::Button::with_label("Close");
+    close.set_halign(gtk::Align::End);
+    let d = dialog.clone();
+    close.connect_clicked(move |_| d.close());
+    card.append(&close);
+    dialog.present();
+}
+
+pub fn current() -> String {
+    ui().map(|u| u.borrow().current.clone()).unwrap_or_default()
+}
+
+/// The layer over the window, for toasts and the settings dialog.
+pub fn overlay() -> Option<gtk::Overlay> {
+    ui().map(|u| u.borrow().overlay.clone())
 }
 
 /// A narrow window lays its pages out for a half-screen tile.
@@ -597,10 +683,6 @@ fn centre_icons(w: &gtk::Widget, compact: bool) {
     {
         content.set_halign(if compact { gtk::Align::Center } else { gtk::Align::Fill });
     }
-    if w.has_css_class("nav-collapse") {
-        w.set_halign(if compact { gtk::Align::Center } else { gtk::Align::End });
-        w.set_hexpand(compact);
-    }
     let mut child = w.first_child();
     while let Some(c) = child {
         centre_icons(&c, compact);
@@ -630,10 +712,10 @@ fn ensure_built(id: &'static str) {
     }
     let section = {
         let u = ui.borrow();
-        u.sections.iter().find(|s| s.id == id).map(|s| (s.id, s.title, s.description, (s.files)(), s.build, s.fill))
+        u.sections.iter().find(|s| s.id == id).map(|s| (s.id, s.build, s.fill))
     };
-    let Some((sid, title, description, files, build, fill)) = section else { return };
-    let page = widgets::page(sid, title, description, &files);
+    let Some((sid, build, fill)) = section else { return };
+    let page = widgets::page(sid);
     if fill {
         page.fill();
     }
@@ -662,17 +744,32 @@ pub fn is_transfers() -> bool {
 
 pub fn navigate(id: &str) {
     let Some(ui) = ui() else { return };
+    // Settings pages open in the dialog, over whatever is showing.
+    if settings_dialog::is_settings(id) {
+        settings_dialog::open(Some(id));
+        if !ui.borrow().current.is_empty() {
+            return;
+        }
+    }
+    let mut crumb = String::new();
     let (page_id, nav_id): (&'static str, String) = if let Some(f) = Filter::from_id(id) {
         ensure_built("transfers");
         transfers::set_filter(f.clone());
+        crumb = transfers::filter_title(&f);
         ("transfers", f.id())
     } else {
-        let found = ui.borrow().sections.iter().find(|s| s.id == id && s.id != "transfers").map(|s| s.id);
+        let found = ui
+            .borrow()
+            .sections
+            .iter()
+            .find(|s| s.id == id && s.id != "transfers" && !settings_dialog::is_settings(s.id))
+            .map(|s| s.id);
         match found {
             Some(sid) => (sid, sid.to_string()),
             None => {
                 ensure_built("transfers");
                 transfers::set_filter(Filter::All);
+                crumb = transfers::filter_title(&Filter::All);
                 ("transfers", "all".to_string())
             }
         }
@@ -681,125 +778,14 @@ pub fn navigate(id: &str) {
     mark_active(&nav_id);
     {
         let mut u = ui.borrow_mut();
+        if crumb.is_empty() {
+            crumb = u.sections.iter().find(|s| s.id == page_id).map(|s| s.title.to_string()).unwrap_or_default();
+        }
+        u.crumb.set_text(&crumb);
         u.stack.set_visible_child_name(page_id);
         u.current = nav_id.clone();
     }
     prefs::update(|p| p.last_section = nav_id);
-}
-
-fn filter(query: &str) {
-    let Some(ui) = ui() else { return };
-    let q = query.trim().to_lowercase();
-    let terms: Vec<&str> = q.split_whitespace().collect();
-
-    if !terms.is_empty() {
-        let ids: Vec<&'static str> = ui.borrow().sections.iter().filter(|s| s.searchable).map(|s| s.id).collect();
-        for id in ids {
-            ensure_built(id);
-        }
-    }
-
-    let mut section_hits: HashMap<String, usize> = HashMap::new();
-    let title_hits: Vec<&'static str> = {
-        let u = ui.borrow();
-        u.sections
-            .iter()
-            .filter(|s| {
-                let hay = format!("{} {} {}", s.title, s.description, s.keywords).to_lowercase();
-                !terms.is_empty() && terms.iter().all(|t| hay.contains(t))
-            })
-            .map(|s| s.id)
-            .collect()
-    };
-
-    SEARCH.with(|s| {
-        let items = s.borrow();
-        let mut groups_visible: HashMap<gtk::Widget, bool> = HashMap::new();
-        for item in items.iter() {
-            item.row.remove_css_class("search-hit");
-            let hit = !terms.is_empty() && terms.iter().all(|t| item.text.contains(t));
-            let whole_section = title_hits.iter().any(|id| *id == item.section);
-            let show = terms.is_empty() || hit || whole_section;
-            item.row.set_visible(show);
-            if hit {
-                *section_hits.entry(item.section.clone()).or_default() += 1;
-            }
-            if let Some(g) = &item.group {
-                let e = groups_visible.entry(g.clone()).or_insert(false);
-                *e |= show;
-            }
-        }
-        for (g, visible) in groups_visible {
-            g.set_visible(visible);
-        }
-    });
-
-    let u = ui.borrow();
-    // While searching, the sidebar lists only the pages with matches.
-    for g in &u.filter_groups {
-        g.set_visible(terms.is_empty());
-    }
-    let mut first_match: Option<&'static str> = None;
-    for s in &u.sections {
-        let Some(button) = u.nav_items.get(s.id) else { continue };
-        let visible = terms.is_empty() || section_hits.contains_key(s.id) || title_hits.contains(&s.id);
-        button.set_visible(visible);
-        if visible && first_match.is_none() && !terms.is_empty() {
-            first_match = Some(s.id);
-        }
-    }
-    for (label, ids) in &u.nav_groups {
-        label.set_visible(ids.iter().any(|id| u.nav_items.get(id).is_some_and(|b| b.is_visible())));
-    }
-    let current = u.current.clone();
-    let current_visible = u.nav_items.get(&current).is_some_and(|b| b.is_visible());
-    drop(u);
-    if let Some(first) = first_match
-        && (!current_visible || !section_hits.contains_key(&current))
-    {
-        navigate(first);
-    }
-    highlight_first_hit(&terms);
-}
-
-fn highlight_first_hit(terms: &[&str]) {
-    if terms.is_empty() {
-        return;
-    }
-    let Some(ui) = ui() else { return };
-    let current = ui.borrow().current.clone();
-    let row = SEARCH.with(|s| {
-        s.borrow().iter().find(|i| i.section == current && terms.iter().all(|t| i.text.contains(t))).map(|i| i.row.clone())
-    });
-    if let Some(row) = row {
-        row.add_css_class("search-hit");
-        scroll_to(&row);
-    }
-}
-
-fn scroll_to(row: &gtk::Widget) {
-    let Some(ui) = ui() else { return };
-    let current = ui.borrow().current.clone();
-    let Some(page) = ui.borrow().pages.iter().find(|(k, _)| **k == current).map(|(_, v)| v.clone()) else { return };
-    let row = row.clone();
-    glib::idle_add_local_once(move || {
-        if let Some(child) = page.child()
-            && let Some(p) = row.compute_point(&child, &gtk::graphene::Point::new(0.0, 0.0))
-        {
-            let adj = page.vadjustment();
-            adj.set_value((p.y() as f64 - 80.0).max(0.0));
-        }
-    });
-}
-
-fn focus_first_hit() {
-    let Some(ui) = ui() else { return };
-    let current = ui.borrow().current.clone();
-    let row = SEARCH
-        .with(|s| s.borrow().iter().find(|i| i.section == current && i.row.has_css_class("search-hit")).map(|i| i.row.clone()));
-    if let Some(row) = row {
-        row.child_focus(gtk::DirectionType::TabForward);
-    }
 }
 
 /// Show a short message at the bottom of the window.

@@ -34,7 +34,7 @@ pub fn build(page: &Page) {
         let dd = theme_dd.clone();
         let (r, _) = widgets::switch_row(
             "Follow Omarchy theme",
-            "Match the desktop's colours and update live whenever the Omarchy theme changes.",
+            "Match the desktop's colors and update live whenever the Omarchy theme changes.",
             p.mode == prefs::ThemeMode::Omarchy,
             move |on| {
                 prefs::update(|p| p.mode = if on { prefs::ThemeMode::Omarchy } else { prefs::ThemeMode::Theme });
@@ -79,7 +79,7 @@ pub fn build(page: &Page) {
         }
         glib::ControlFlow::Continue
     });
-    g.add(&widgets::row("Current colours", "", Some(swatches.upcast_ref())));
+    g.add(&widgets::row("Current colors", "", Some(swatches.upcast_ref())));
 
     let (r, _) = widgets::switch_row("Glow", "Soft accent glow around focused and selected elements.", p.glow, |on| {
         prefs::update(|p| p.glow = on);
@@ -94,7 +94,7 @@ pub fn build(page: &Page) {
     g.add(&r);
 
     // ----- Behaviour -----
-    let g = page.group("Behaviour");
+    let g = page.group("Behavior");
     let (r, _) = widgets::switch_row(
         "Keep running when closed",
         "Closing the window keeps torrents going. Run <tt>torrents</tt> to bring it back; <tt>Ctrl+Q</tt> quits.",
@@ -155,18 +155,7 @@ pub fn build(page: &Page) {
 
     // ----- Keyboard -----
     let g = page.group("Keyboard");
-    for (keys, what) in [
-        (&["Ctrl", "O"][..], "Add a .torrent file"),
-        (&["Ctrl", "U"][..], "Add a magnet link"),
-        (&["Ctrl", "F"][..], "Filter the list, or search settings"),
-        (&["Space"][..], "Pause or resume the selection"),
-        (&["Delete"][..], "Remove the selection"),
-        (&["Ctrl", "C"][..], "Copy magnet links of the selection"),
-        (&["Ctrl", "A"][..], "Select every torrent in view"),
-        (&["Esc"][..], "Clear the search"),
-        (&["Ctrl", "W"][..], "Close the window"),
-        (&["Ctrl", "Q"][..], "Quit"),
-    ] {
+    for (keys, what) in crate::window::SHORTCUTS {
         g.add(&widgets::row(what, "", Some(widgets::keycaps(keys).upcast_ref())));
     }
 }

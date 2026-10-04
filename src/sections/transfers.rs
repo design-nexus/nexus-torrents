@@ -91,7 +91,6 @@ struct State {
     search: gtk::SearchEntry,
     empty: gtk::Stack,
     empty_label: gtk::Label,
-    title: gtk::Label,
     buttons: Vec<gtk::Widget>,
     /// The table width the columns were last fitted to.
     fitted: i32,
@@ -529,16 +528,20 @@ pub fn refresh_meta() {
 
 // ---------- Public API ----------
 
+/// A filter's name for the top bar.
+pub fn filter_title(f: &Filter) -> String {
+    match f {
+        Filter::All => "All torrents".to_string(),
+        Filter::Category(Some(c)) => format!("Category: {c}"),
+        Filter::Tag(Some(t)) => format!("Tag: {t}"),
+        other => other.title(),
+    }
+}
+
 pub fn set_filter(f: Filter) {
     let Some(st_rc) = state() else { return };
     {
         let mut st = st_rc.borrow_mut();
-        st.title.set_text(&match &f {
-            Filter::All => "All torrents".to_string(),
-            Filter::Category(Some(c)) => format!("Category: {c}"),
-            Filter::Tag(Some(t)) => format!("Tag: {t}"),
-            other => other.title(),
-        });
         st.current = f;
         st.order.clear();
     }
@@ -622,19 +625,7 @@ fn tool_button(icon: &str, tooltip: &str, f: impl Fn() + 'static) -> gtk::Button
 }
 
 pub fn build(page: &Page) {
-    // The page header is replaced by the filter title and the toolbar.
-    if let Some(header) = page.body.first_child() {
-        header.set_visible(false);
-    }
     let p = prefs::get();
-
-    let head = widgets::hbox(12);
-    head.add_css_class("section-header");
-    let title = widgets::label("All torrents", "section-title");
-    title.set_hexpand(true);
-    title.set_ellipsize(pango::EllipsizeMode::End);
-    head.append(&title);
-    page.body.append(&head);
 
     // ----- Toolbar -----
     let toolbar = widgets::hbox(6);
@@ -938,7 +929,6 @@ pub fn build(page: &Page) {
         search,
         empty,
         empty_label,
-        title,
         buttons: vec![resume.upcast(), pause.upcast(), remove.upcast(), up.upcast(), down.upcast()],
         fitted: 0,
         queue_box,

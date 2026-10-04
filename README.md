@@ -1,6 +1,6 @@
 # Torrents
 
-A BitTorrent client for [Omarchy](https://omarchy.org). It takes its colours from
+A BitTorrent client for [Omarchy](https://omarchy.org). It takes its colors from
 your Omarchy theme and fits a half-screen tile.
 
 ## Features
@@ -25,7 +25,7 @@ your Omarchy theme and fits a half-screen tile.
   used nova3 format). Plugins can be installed from a file or a link, or imported
   from an existing qBittorrent install.
 - **Speed limits.** Global limits, plus a slow mode you can switch on from the
-  sidebar or run on a schedule.
+  status bar or run on a schedule.
 - **Seeding limits.** Stop at a share ratio or after a seeding time.
 - **When a download finishes.** Get a notification, run a command, or move it out
   of an incomplete-downloads folder.
@@ -63,6 +63,7 @@ turn on **Keep running when closed** in Appearance.
 | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Add a .torrent file |
 | <kbd>Ctrl</kbd>+<kbd>U</kbd> | Add a magnet link |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | Filter the list |
+| <kbd>F1</kbd> | Show the shortcuts |
 | <kbd>Space</kbd> | Pause or resume |
 | <kbd>Delete</kbd> | Remove |
 | <kbd>Ctrl</kbd>+<kbd>C</kbd> | Copy magnet links |
@@ -77,6 +78,6 @@ turn on **Keep running when closed** in Appearance.
 | `~/.config/torrents/themes/` | Your own themes |
 | `~/.local/share/torrents/` | The session: resume data, DHT state, search plugins |
 
-## Licence
+## License
 
 MIT. libtorrent is BSD-licensed.

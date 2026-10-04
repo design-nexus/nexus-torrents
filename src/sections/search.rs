@@ -24,6 +24,8 @@ struct State {
 
 thread_local! {
     static STATE: RefCell<Option<Rc<RefCell<State>>>> = const { RefCell::new(None) };
+    /// The search field, for Ctrl+F.
+    static QUERY: RefCell<Option<gtk::SearchEntry>> = const { RefCell::new(None) };
 }
 
 fn state() -> Option<Rc<RefCell<State>>> {
@@ -405,6 +407,7 @@ pub fn build(page: &Page) {
     entry.set_hexpand(true);
     entry.set_width_chars(8);
     toolbar.append(&entry);
+    QUERY.with(|q| *q.borrow_mut() = Some(entry.clone()));
     let cats: Vec<&str> = search::CATEGORIES.iter().map(|c| c.1).collect();
     let category = gtk::DropDown::from_strings(&cats);
     let current = prefs::get().search_category;
@@ -501,4 +504,13 @@ pub fn build(page: &Page) {
     if let Ok(q) = std::env::var("TORRENTS_SNAPSHOT_SEARCH") {
         glib::timeout_add_local_once(std::time::Duration::from_millis(1500), move || start(&q, "all"));
     }
+}
+
+/// Put the cursor in the search field.
+pub fn focus_query() {
+    QUERY.with(|q| {
+        if let Some(e) = q.borrow().as_ref() {
+            e.grab_focus();
+        }
+    });
 }

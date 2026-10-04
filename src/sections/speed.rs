@@ -38,7 +38,7 @@ pub fn build(page: &Page) {
 
     // ----- Alternative -----
     let g = page.group("Alternative limits");
-    g.note("Slow mode, for when you need the connection for something else. The turtle in the sidebar switches it.");
+    g.note("Slow mode, for when you need the connection for something else. The turtle in the status bar switches it.");
     g.add(&limit_row("Download", "", p.alt_dl_limit, |v| set(|p| p.alt_dl_limit = v)));
     g.add(&limit_row("Upload", "", p.alt_ul_limit, |v| set(|p| p.alt_ul_limit = v)));
 

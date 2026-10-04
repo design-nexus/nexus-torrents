@@ -12,6 +12,7 @@ mod paths;
 mod prefs;
 mod search;
 mod sections;
+mod settings_dialog;
 mod store;
 mod table;
 mod theme;

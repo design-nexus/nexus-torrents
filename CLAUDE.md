@@ -1,7 +1,12 @@
 # Torrents — notes for working on this repo
 
-- GTK4 (gtk4-rs 0.11) + Rust, no libadwaita. Follows `~/Projects/STYLE.md`; theme,
-  window, widgets, graph and stylesheet started as copies of Tasks (`~/Projects/nexus-tasks`).
+- GTK4 (gtk4-rs 0.11) + Rust, no libadwaita. The window is one flat, monospace surface
+  split by hairlines: a top bar (sidebar toggle, `Torrents / <filter>`, search, settings,
+  close), the sidebar, the page and a status bar (`F1 Shortcuts`, speeds, port, DHT,
+  free space, the slow-mode turtle). Pages have no title header. The settings pages
+  (group `Settings` in `sections::all`) open in `settings_dialog.rs`, a card over the
+  window with its own search over `widgets::SEARCH`; `navigate("speed")` etc. open it.
+  Theme, window, widgets, graph and stylesheet started as copies of Tasks (`~/Projects/nexus-tasks`).
   Every colour is a `@theme_*` token; cairo drawing gets colours from `theme::palette()`.
 - Engine: libtorrent-rasterbar 2.x through `engine/shim.{h,cpp}` and the cxx bridge in
   `src/engine/ffi.rs`. Only plain values cross it; torrents are keyed by

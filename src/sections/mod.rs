@@ -28,8 +28,6 @@ pub struct Section {
     pub build: fn(&Page),
     /// The page manages its own scrolling (tables).
     pub fill: bool,
-    /// The sidebar search looks through this page's cards.
-    pub searchable: bool,
 }
 
 fn settings_file() -> Vec<PathBuf> {
@@ -52,7 +50,6 @@ pub fn all() -> Vec<Section> {
             files: Vec::new,
             build: transfers::build,
             fill: true,
-            searchable: false,
         },
         Section {
             id: "search",
@@ -64,7 +61,6 @@ pub fn all() -> Vec<Section> {
             files: Vec::new,
             build: search::build,
             fill: true,
-            searchable: false,
         },
         Section {
             id: "downloads",
@@ -76,7 +72,6 @@ pub fn all() -> Vec<Section> {
             files: download_files,
             build: downloads::build,
             fill: false,
-            searchable: true,
         },
         Section {
             id: "connection",
@@ -88,7 +83,6 @@ pub fn all() -> Vec<Section> {
             files: settings_file,
             build: connection::build,
             fill: false,
-            searchable: true,
         },
         Section {
             id: "speed",
@@ -100,7 +94,6 @@ pub fn all() -> Vec<Section> {
             files: settings_file,
             build: speed::build,
             fill: false,
-            searchable: true,
         },
         Section {
             id: "bittorrent",
@@ -112,7 +105,6 @@ pub fn all() -> Vec<Section> {
             files: settings_file,
             build: bittorrent::build,
             fill: false,
-            searchable: true,
         },
         Section {
             id: "appearance",
@@ -124,7 +116,6 @@ pub fn all() -> Vec<Section> {
             files: settings_file,
             build: appearance::build,
             fill: false,
-            searchable: true,
         },
     ]
 }
