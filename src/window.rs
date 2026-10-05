@@ -639,13 +639,21 @@ pub const SHORTCUTS: &[(&[&str], &str)] = &[
 ];
 
 pub fn show_shortcuts() {
-    let (dialog, card) = widgets::dialog("Keyboard shortcuts", 460);
+    let (dialog, card) = widgets::dialog("Keyboard shortcuts", 520);
     let list = widgets::vbox(0);
     list.add_css_class("group-list");
     for (keys, what) in SHORTCUTS {
         list.append(&widgets::row(what, "", Some(widgets::keycaps(keys).upcast_ref())));
     }
-    card.append(&list);
+    let scroll = gtk::ScrolledWindow::builder()
+        .hscrollbar_policy(gtk::PolicyType::Never)
+        // Scrolls without a scrollbar, which would cover the key caps.
+        .vscrollbar_policy(gtk::PolicyType::External)
+        .propagate_natural_height(true)
+        .max_content_height(560)
+        .child(&list)
+        .build();
+    card.append(&scroll);
     let close = gtk::Button::with_label("Close");
     close.set_halign(gtk::Align::End);
     let d = dialog.clone();
